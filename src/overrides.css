@@ -4,3 +4,4 @@
 .fixture-rows{display:grid;gap:7px}.fixture-rows>div{display:grid;grid-template-columns:1fr 130px;gap:8px}.label-main span{display:flex;gap:7px}.label-main em{display:inline-flex;align-items:center;gap:3px;font-style:normal}.label-main em svg{width:12px;height:12px;flex:0 0 auto}
 .panel{--dot-w:.75in}.rail{grid-template-rows:42px repeat(30,var(--row-h));grid-auto-rows:unset}.numbers{grid-template-rows:repeat(30,var(--row-h));grid-auto-rows:unset}.label{grid-template-columns:1fr var(--dot-w)}.label i{width:.5in;height:.5in}.icon-trigger{width:40px;justify-content:center;padding:9px}.icon-grid{grid-template-columns:repeat(6,1fr)}
 .rail{gap:0}.label{height:100%;box-sizing:border-box}.numbers span{height:100%;box-sizing:border-box}
+.dots-outline .label i{background:transparent!important;border:1px solid #334155}.dots-none .label{grid-template-columns:1fr}.dots-none .label i{display:none}.dots-none .label-main{padding-right:.12in}
