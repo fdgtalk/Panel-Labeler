@@ -1,4 +1,4 @@
-import { ArrowRight, Bath, BedDouble, ChevronDown, ChevronUp, ChevronsUp, Download, Dumbbell, Fan, Hammer, Lightbulb, ListOrdered, Moon, MousePointer2, PanelTop, Plug, Printer, RotateCcw, Settings2, Sun, Trees, Trash2, Triangle, Upload, Utensils, WashingMachine, Waves, Wrench } from 'lucide-react'
+import { ArrowRight, Bath, BedDouble, Download, Dumbbell, Fan, Hammer, Lightbulb, ListOrdered, Moon, MousePointer2, PanelTop, Plug, Printer, RotateCcw, Settings2, Sun, Trees, Trash2, Upload, Utensils, WashingMachine, Waves, Wrench } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
 import { useState } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -38,7 +38,7 @@ iconMap['Mécanique']=LucideIcons.Heater
 const fixtureChoicesByLanguage={EN:['Lights','Outlets','GFCI','Dryer','Washer','Baseboard heater','Floor heat','Ceiling fan','Oven','Dishwasher','Air exchange','Central vacuum','Water heater'],FR:['Lumières','Prises','DDFT','Sécheuse','Laveuse','Plinthe électrique','Plancher chauffant','Ventilateur de plafond','Four','Lave-vaisselle','Échangeur d’air','Aspirateur central','Chauffe-eau']}
 const autoFixture=(text='')=>/water heater|chauffe-eau|heater tank/i.test(text)?'heater':/washer|laveuse|dryer|sécheuse/i.test(text)?'laundry':/central vacuum|aspirateur central/i.test(text)?'vacuum':/air exchange|échangeur d.?air|ventilation/i.test(text)?'ventilation':/stove fan|oven fan|range hood|hotte/i.test(text)?'hood':/stove|range|oven|cuisinière|four/i.test(text)?'appliance':/light|lamp|lumière/i.test(text)?'light':/outlet|plug|gfci|prise|ddft/i.test(text)?'plug':/fan|ventilateur/i.test(text)?'fan':null
 const autoRoom=(room='')=>({Workshop:'Hammer',Atelier:'Hammer',Laundry:'WashingMachine','Laundry room':'WashingMachine','Salle de lavage':'WashingMachine',Kitchen:'Utensils',Cuisine:'Utensils',Bedroom:'BedDouble',Chambre:'BedDouble',Bachelor:'BedDouble','Garçonnière':'BedDouble',Bathroom:'Bath','Salle de bain':'Bath',Office:'Wrench',Bureau:'Wrench',Gym:'Dumbbell',Sauna:'Waves',Staircase:'ListOrdered',Escalier:'ListOrdered','Living room':'Wrench',Salon:'Wrench','Dining room':'Utensils','Salle à manger':'Utensils',Garage:'Wrench',Terrace:'Trees',Terrasse:'Trees',Outside:'Trees','Extérieur':'Trees',Utility:'Heater','Mécanique':'Heater'}[room])
-const levelMarker=floor=>({BSM:ChevronDown,SS:ChevronDown,'1ST':ChevronUp,RDC:ChevronUp,MEZ:Triangle,'2ND':ChevronsUp,'2E':ChevronsUp,OUT:Trees,EXT:Trees,MEC:Wrench}[floor])
+function FloorIndicator({floor}){const selected=(floor==='BSM'||floor==='SS')?0:(floor==='1ST'||floor==='RDC')?1:(floor==='MEZ'||floor==='2ND'||floor==='2E')?2:null;if(floor==='OUT'||floor==='EXT')return <Trees className="level-logo"/>;if(floor==='MEC')return <Wrench className="level-logo"/>;return selected===null?null:<span className="floor-dots" aria-label={`Level ${floor}`}>{[0,1,2].map(index=><i className={index===selected?'selected':''} key={index}/>)}</span>}
 
 const usePanel = create((set) => ({ rows:savedProject?.rows||demoRows(initialLanguage), theme:savedProject?.theme||'dark', started:false, edit:null, settingsOpen:false, dragging:null, config:{title:'Panel',count:60,width:3,row:.75,dotMode:'color',language:initialLanguage,paper:'letter',...(savedProject?.config||{})},
   set:(key,value)=>set({[key]:value}),
@@ -180,8 +180,7 @@ function Label({ card, side, index, onClick, beginDrag, setDragTarget, endDrag, 
   const className=`label ${side} ${card.double?'double':''} ${isTarget?'drop-target':''}`
   const props={draggable:true,onDragStart:dragStart,onDragEnd:endDrag,onDragOver:dragOver,onDragEnter:dragEnter,onDrop:drop,className,onClick}
   const Icon=card.icon&&card.icon!=='auto'?icons[card.icon]:iconMap[card.room]
-  const LevelMarker=levelMarker(card.floor)
-  const marker=card.room&&Icon?<i className="room-icon-slot"><Icon/>{LevelMarker&&<LevelMarker className="level-direction"/>}</i>:null
+  const marker=card.room&&Icon?<i className="room-icon-slot"><Icon/><FloorIndicator floor={card.floor}/></i>:null
   if(card.empty&&!card.room&&!card.items?.length)return <button {...props} className={`${className} blank`} aria-label="Add circuit"><span className="blank-content"/></button>
   const fixtures=(card.fixtures||card.items.map(text=>({text,icon:'auto'}))).filter(x=>x.text).slice(0,3)
   const main=<span className="label-main"><b>{card.room}</b><small><span>{card.floor}</span></small><span>{fixtures.map((f,i)=>{const I=icons[f.icon==='auto'?autoFixture(f.text):f.icon];return <em className={i<2?'primary-fixture':''} key={i}>{I&&<I/>}{f.text}</em>})}</span></span>
