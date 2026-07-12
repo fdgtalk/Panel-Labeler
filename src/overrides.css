@@ -7,6 +7,14 @@
 .label:not(.blank){position:relative}.label.left:not(.blank)::after,.label.right:not(.blank)::after{content:"";position:absolute;top:0;bottom:0;border-color:#98a2b3;border-style:solid;pointer-events:none}.label.left:not(.blank)::after{right:var(--dot-w);border-width:0 0 0 1px}.label.right:not(.blank)::after{left:var(--dot-w);border-width:0 1px 0 0}
 .rail{gap:0}.label{height:100%;box-sizing:border-box}.numbers span{height:100%;box-sizing:border-box}
 .dots-outline .label i{background:transparent!important;border:1px solid #334155}.dots-none .label{grid-template-columns:1fr}.dots-none .label i,.dots-none .label::after{display:none}.dots-none .label-main{padding-right:.12in}
+.dots-outline .label i{color:#344054}
+.dots-pattern .label i{color:#142032!important;border-color:#1e293b!important;background-color:#fff!important}.dots-pattern .label i span{padding:1px 2px;border-radius:3px;background:#fff}
+.dots-pattern .label i.level-BSM,.dots-pattern .label i.level-SS{background-image:repeating-linear-gradient(0deg,transparent 0 7px,#334155 7px 9px)!important}
+.dots-pattern .label i.level-1ST,.dots-pattern .label i.level-RDC{background-image:repeating-linear-gradient(135deg,transparent 0 7px,#334155 7px 9px)!important}
+.dots-pattern .label i.level-MEZ{background-image:repeating-linear-gradient(90deg,transparent 0 7px,#334155 7px 9px),repeating-linear-gradient(0deg,transparent 0 9px,#334155 9px 10px)!important}
+.dots-pattern .label i.level-OUT,.dots-pattern .label i.level-EXT{background-image:repeating-linear-gradient(0deg,transparent 0 7px,#334155 7px 9px),repeating-linear-gradient(90deg,transparent 0 10px,#334155 10px 11px)!important}
+.dots-pattern .label i.level-MEC{background-image:repeating-linear-gradient(0deg,transparent 0 7px,#334155 7px 9px),repeating-linear-gradient(90deg,transparent 0 7px,#334155 7px 9px)!important}
+.panel-actions{width:min(900px,100%);margin:0 auto 10px;display:flex;justify-content:flex-end}
 .settings-card select{border:1px solid #b8c3d2;border-radius:6px;padding:8px;font:14px inherit;background:#fff}.dialog .fields{grid-template-columns:minmax(0,1fr) 40px}.dialog .fields>label:first-child{min-width:0}
 .dialog .breaker-meta{grid-template-columns:160px 1fr}.dialog .breaker-meta .check{justify-self:start;margin-top:25px}.fixture-rows>div{grid-template-columns:minmax(0,1fr) 40px}.fixture-rows .icon-picker{justify-self:end}
 .dialog .icon-trigger{height:42px;padding:8px}.dialog .fields>label:first-child,.fixture-rows .smart-input{width:100%}.dialog footer{justify-content:flex-end;gap:8px}
@@ -24,6 +32,7 @@
 .icon-search{display:flex;gap:6px;margin-bottom:6px}.icon-search input{min-width:0;flex:1}.icon-search button{white-space:nowrap;border:1px solid #d8dee8;background:#fff;border-radius:5px;padding:5px 7px;font:12px inherit}
 .dark .settings-card{background:#172333;border-color:#3b4a60;color:#f8fafc}.dark .settings-card label{color:#f8fafc}.dark .settings-card input,.dark .settings-card select{background:#101827;border-color:#52647d;color:#f8fafc}.dark .settings-card .settings-danger{border-color:#3b4a60}
 .dialog-actions{width:100%}.dialog-actions-left{margin-right:auto}.dialog-actions-right{margin-left:auto}
+.jpeg-preview{width:min(720px,100%)}.jpeg-preview img{display:block;width:100%;max-height:65vh;object-fit:contain;border:1px solid #d0d7e2;border-radius:8px;background:#101827}.jpeg-preview footer{justify-content:flex-end}.jpeg-preview a.button{text-decoration:none}
 .label-main small{display:grid;justify-items:end;gap:2px;line-height:1}.label-main small>span{display:block;grid-column:auto;padding:0;font:inherit}.label-main small strong{font:700 9px "DM Mono";color:#98a2b3}
 .label i{display:grid;place-items:center;color:#fff;font:700 9px "DM Mono";line-height:1}.label i span{display:block}.blank-content{min-width:0}@media print{.print-panel .label i{color:#fff}}
 .label.blank i{background:#fff!important;color:#344054}

@@ -1,6 +1,7 @@
 import { Bath, BedDouble, Download, Dumbbell, Fan, Hammer, Lightbulb, ListOrdered, Moon, PanelTop, Plug, Printer, RotateCcw, Settings2, Sun, Trees, Trash2, Upload, Utensils, WashingMachine, Waves, Wrench } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
 import { useState } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { create } from 'zustand'
 import { SmartInput } from './components/SmartInput'
 import { IconPicker } from './components/IconPicker'
@@ -38,7 +39,7 @@ const fixtureChoicesByLanguage={EN:['Lights','Outlets','GFCI','Dryer','Washer','
 const autoFixture=(text='')=>/water heater|chauffe-eau|heater tank/i.test(text)?'heater':/washer|laveuse|dryer|sécheuse/i.test(text)?'laundry':/central vacuum|aspirateur central/i.test(text)?'vacuum':/air exchange|échangeur d.?air|ventilation/i.test(text)?'ventilation':/stove fan|oven fan|range hood|hotte/i.test(text)?'hood':/stove|range|oven|cuisinière|four/i.test(text)?'appliance':/light|lamp|lumière/i.test(text)?'light':/outlet|plug|gfci|prise|ddft/i.test(text)?'plug':/fan|ventilateur/i.test(text)?'fan':null
 const autoRoom=(room='')=>({Workshop:'Hammer',Atelier:'Hammer',Laundry:'WashingMachine','Laundry room':'WashingMachine','Salle de lavage':'WashingMachine',Kitchen:'Utensils',Cuisine:'Utensils',Bedroom:'BedDouble',Chambre:'BedDouble',Bachelor:'BedDouble','Garçonnière':'BedDouble',Bathroom:'Bath','Salle de bain':'Bath',Office:'Wrench',Bureau:'Wrench',Gym:'Dumbbell',Sauna:'Waves',Staircase:'ListOrdered',Escalier:'ListOrdered','Living room':'Wrench',Salon:'Wrench','Dining room':'Utensils','Salle à manger':'Utensils',Garage:'Wrench',Terrace:'Trees',Terrasse:'Trees',Outside:'Trees','Extérieur':'Trees',Utility:'Heater','Mécanique':'Heater'}[room])
 
-const usePanel = create((set) => ({ rows:savedProject?.rows||demoRows(initialLanguage), theme:savedProject?.theme||'dark', started:false, edit:null, settingsOpen:false, dragging:null, config:{count:60,width:3,row:.75,dotMode:'color',language:initialLanguage,paper:'letter',...(savedProject?.config||{})},
+const usePanel = create((set) => ({ rows:savedProject?.rows||demoRows(initialLanguage), theme:savedProject?.theme||'dark', started:false, edit:null, settingsOpen:false, dragging:null, config:{title:'Panel',count:60,width:3,row:.75,dotMode:'color',language:initialLanguage,paper:'letter',...(savedProject?.config||{})},
   set:(key,value)=>set({[key]:value}),
   save:(side,index,breaker,card)=>set(s=>{
     const targetSide=breaker%2?'left':'right',targetIndex=Math.floor((breaker-1)/2),rows=s.rows.map(row=>({left:{...row.left},right:{...row.right}})),previous=rows[index][side],target=rows[targetIndex][targetSide]
@@ -114,15 +115,65 @@ const usePanel = create((set) => ({ rows:savedProject?.rows||demoRows(initialLan
 usePanel.subscribe(state=>localStorage.setItem(storageKey,JSON.stringify({rows:state.rows,config:state.config,theme:state.theme,levelColors})))
 
 const Button = ({ children, variant='ghost', ...props }) => <button className={`button ${variant}`} {...props}>{children}</button>
+const drawJpegIcon=(ctx,Icon,x,y,size,color)=>new Promise(resolve=>{
+  if(!Icon)return resolve()
+  const image=new Image(),svg=renderToStaticMarkup(<Icon size={size} strokeWidth={2} color={color}/>)
+  image.onload=()=>{ctx.drawImage(image,x,y,size,size);resolve()}
+  image.onerror=resolve
+  image.src=`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+})
+const drawMonoPattern=(ctx,level,x,y,r)=>{
+  ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.clip();ctx.strokeStyle='#1e293b';ctx.lineWidth=2
+  const horizontal=(dashed=false)=>{ctx.setLineDash(dashed?[5,4]:[]);for(let n=y-r;n<=y+r;n+=9){ctx.beginPath();ctx.moveTo(x-r,n);ctx.lineTo(x+r,n);ctx.stroke()}}
+  const vertical=(dashed=false)=>{ctx.setLineDash(dashed?[5,4]:[]);for(let n=x-r;n<=x+r;n+=9){ctx.beginPath();ctx.moveTo(n,y-r);ctx.lineTo(n,y+r);ctx.stroke()}}
+  const diagonal=()=>{ctx.setLineDash([]);for(let n=-r*2;n<=r*2;n+=10){ctx.beginPath();ctx.moveTo(x-r+n,y+r);ctx.lineTo(x+r+n,y-r);ctx.stroke()}}
+  if(level==='BSM')horizontal()
+  else if(level==='1ST')diagonal()
+  else if(level==='MEZ'){vertical();horizontal(true)}
+  else if(level==='2ND')vertical()
+  else if(level==='OUT'){horizontal();vertical(true)}
+  else {vertical();horizontal()}
+  ctx.restore()
+}
+const makeJpeg=async(rows,config,monochrome=false)=>{
+  const activeRows=rows.slice(0,Math.ceil(config.count/2)),width=1080,padding=24,header=108,rowHeight=68,height=header+activeRows.length*rowHeight+padding
+  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d')
+  canvas.width=width;canvas.height=height
+  ctx.fillStyle='#eef2f6';ctx.fillRect(0,0,width,height)
+  ctx.fillStyle='#132238';ctx.fillRect(padding,padding,width-padding*2,header-24)
+  ctx.fillStyle='#fff';ctx.font='700 32px Inter, system-ui, sans-serif';ctx.fillText(config.title||'Panel Labeler',padding+20,66)
+  ctx.fillStyle='#a9b8ca';ctx.font='16px ui-monospace, SFMono-Regular, monospace';ctx.fillText(`${config.count} BREAKER PANEL  ·  ${config.language==='FR'?'FRANÇAIS':'ENGLISH'}${monochrome?'  ·  B&W':''}`,padding+20,91)
+  const cardWidth=(width-padding*2-20)/2
+  const draw=async(card,side,rowIndex)=>{
+    if(card.reserved)return
+    const x=padding+(side==='right'?cardWidth+20:0),y=header+rowIndex*rowHeight,cardH=card.double?rowHeight*2-4:rowHeight-4
+    ctx.fillStyle=card.empty?'#dce4ec':'#fff';ctx.fillRect(x,y,cardWidth,cardH)
+    ctx.strokeStyle=card.empty?'#c7d2de':'#c7d2de';ctx.lineWidth=1.5;ctx.strokeRect(x+1,y+1,cardWidth-2,cardH-2)
+    const breaker=side==='left'?rowIndex*2+1:rowIndex*2+2,dotX=side==='left'?x+cardWidth-31:x+31,dotY=y+cardH/2
+    ctx.beginPath();ctx.arc(dotX,dotY,19,0,Math.PI*2);ctx.fillStyle=monochrome?'#fff':levelColors[card.floor]||dots[card.floor]||'#64748b';ctx.fill();if(monochrome)drawMonoPattern(ctx,card.floor,dotX,dotY,19);ctx.strokeStyle=monochrome?'#334155':'transparent';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=monochrome?'#0f1f35':'#fff';ctx.font='700 12px ui-monospace, SFMono-Regular, monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(breaker).padStart(2,'0'),dotX,dotY+1)
+    if(card.empty&&!card.room&&!card.items?.length)return
+    const textX=side==='left'?x+16:x+58,maxText=cardWidth-82,RoomIcon=card.icon&&card.icon!=='auto'?icons[card.icon]:iconMap[card.room]
+    if(RoomIcon)await drawJpegIcon(ctx,RoomIcon,textX,y+12,17,'#0f1f35')
+    const roomX=textX+(RoomIcon?23:0)
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillStyle='#0f1f35';ctx.font='700 17px Inter, system-ui, sans-serif';ctx.fillText((card.room||'UNLABELLED').toUpperCase(),roomX,y+27,maxText-(RoomIcon?23:0))
+    let fixtureX=textX
+    const fixtures=(card.fixtures||card.items?.map(text=>({text,icon:'auto'}))||[]).filter(f=>f.text).slice(0,3)
+    ctx.fillStyle='#64748b';ctx.font='13px Inter, system-ui, sans-serif'
+    for(const fixture of fixtures){const FixtureIcon=icons[fixture.icon==='auto'?autoFixture(fixture.text):fixture.icon],text=fixture.text;if(FixtureIcon){await drawJpegIcon(ctx,FixtureIcon,fixtureX,y+38,13,'#64748b');fixtureX+=17}ctx.fillText(text,fixtureX,y+49,Math.max(0,x+cardWidth-14-fixtureX));fixtureX+=ctx.measureText(text).width+10}
+    ctx.textAlign='right';ctx.fillStyle=levelColors[card.floor]||dots[card.floor]||'#64748b';ctx.font='700 13px ui-monospace, SFMono-Regular, monospace';ctx.fillText(card.floor||'',side==='left'?x+cardWidth-58:x+cardWidth-14,y+22)
+  }
+  for(let index=0;index<activeRows.length;index+=1){const row=activeRows[index];await draw(row.left,'left',index);await draw(row.right,'right',index)}
+  return canvas.toDataURL('image/jpeg',.94)
+}
 function Label({ card, side, index, onClick, beginDrag, setDragTarget, endDrag, dragging, dragTarget, swap }) {
-  const position={side,index},breaker=side==='left'?index*2+1:index*2+2,isTarget=dragTarget?.side===side&&dragTarget?.index===index
+  const dotMode=usePanel(s=>s.config.dotMode),position={side,index},breaker=side==='left'?index*2+1:index*2+2,isTarget=dragTarget?.side===side&&dragTarget?.index===index
   const dragStart=e=>{e.dataTransfer.effectAllowed='move';beginDrag(position)}
   const dragOver=e=>e.preventDefault()
   const dragEnter=e=>{e.preventDefault();setDragTarget(position)}
   const drop=e=>{e.preventDefault();if(dragging)swap(dragging,position);endDrag()}
   const className=`label ${side} ${card.double?'double':''} ${isTarget?'drop-target':''}`
   const props={draggable:true,onDragStart:dragStart,onDragEnd:endDrag,onDragOver:dragOver,onDragEnter:dragEnter,onDrop:drop,className,onClick}
-  const dot=<i style={{background:levelColors[card.floor]||dots[card.floor]}}><span>{String(breaker).padStart(2,'0')}</span></i>
+  const dot=<i className={`level-${String(card.floor||'none').replace(/[^a-z0-9]/gi,'')}`} style={dotMode==='pattern'?undefined:{background:levelColors[card.floor]||dots[card.floor]}}><span>{String(breaker).padStart(2,'0')}</span></i>
   if(card.empty&&!card.room&&!card.items?.length)return <button {...props} className={`${className} blank`} aria-label="Add circuit">{side==='right'?<>{dot}<span className="blank-content"/></>:<><span className="blank-content"/>{dot}</>}</button>
   const Icon=card.icon&&card.icon!=='auto'?icons[card.icon]:iconMap[card.room]
   const fixtures=(card.fixtures||card.items.map(text=>({text,icon:'auto'}))).filter(x=>x.text).slice(0,3)
@@ -134,7 +185,7 @@ function Dialog({ side,index,card,language='EN' }) { const save=usePanel(s=>s.sa
 function Editor(){
   const {rows,edit,set,reset,dummy,swap,dragging,dragTarget,beginDrag,setDragTarget,endDrag,pasteMode,pasteAt,cancelPaste,config,settingsOpen}=usePanel(),rowCount=config.count/2
   const rail=side=><div className="rail"><h3>{side==='left'?'LEFT · ODD':'RIGHT · EVEN'}</h3>{rows.slice(0,rowCount).map((r,i)=>!r[side].reserved&&<Label key={i} card={r[side]} side={side} index={i} dragging={dragging} dragTarget={dragTarget} beginDrag={beginDrag} setDragTarget={setDragTarget} endDrag={endDrag} swap={swap} onClick={()=>pasteMode?pasteAt(side,i):set('edit',{side,index:i,card:r[side]})}/>)}</div>
-  return <main className="editor"><section className="settings"><div><span className="eyebrow">PROJECT SETTINGS</span><h2>{config.count} breaker panel</h2><p>Drag a label onto a highlighted target to swap exactly those two labels. Nothing else shifts.</p></div><div><Button onClick={()=>set('settingsOpen',!settingsOpen)}><Settings2/> Settings</Button><Button onClick={dummy}>Create demo panel</Button></div></section>{pasteMode&&<div className="paste-banner">Copied label ready — click a breaker to paste it there.<Button onClick={cancelPaste}>Cancel paste</Button></div>}{settingsOpen&&<section className="settings-card"><label>Language<select value={config.language} onChange={e=>set('config',{...config,language:e.target.value})}><option value="EN">English</option><option value="FR">Français</option></select></label><label>Paper size<select value={config.paper} onChange={e=>set('config',{...config,paper:e.target.value})}><option value="letter">US Letter</option><option value="a4">A4</option></select></label><label>Breaker count<input type="number" min="2" max="60" step="2" value={config.count} onChange={e=>set('config',{...config,count:+e.target.value})}/></label><label>Label width (in)<input type="number" step=".25" value={config.width} onChange={e=>set('config',{...config,width:+e.target.value})}/></label><label>Row height (in)<input type="number" step=".05" value={config.row} onChange={e=>set('config',{...config,row:+e.target.value})}/></label><label>Dot print mode<select value={config.dotMode} onChange={e=>set('config',{...config,dotMode:e.target.value})}><option value="color">Full color</option><option value="outline">Outline only</option><option value="none">No dot — expand label</option></select></label><div className="settings-danger"><span>Danger zone</span><Button type="button" onClick={()=>{if(window.confirm('Delete every label from this panel? This cannot be undone.'))reset()}}>Delete panel</Button></div></section>}<section className={`panel dots-${config.dotMode} ${pasteMode?'paste-mode':''}`} style={{'--row-h':`${config.row}in`,'--label-w':`${config.width}in`}}>{rail('left')}<div className="numbers">{rows.slice(0,rowCount).map((_,i)=><span key={i}>{String(i*2+1).padStart(2,'0')} · {String(i*2+2).padStart(2,'0')}</span>)}</div>{rail('right')}</section>{edit&&<Dialog {...edit} language={config.language}/>}</main>
+  return <main className="editor"><section className="settings"><div><span className="eyebrow">PROJECT SETTINGS</span><h2>{config.count} breaker panel</h2><p>Drag a label onto a highlighted target to swap exactly those two labels. Nothing else shifts.</p></div></section>{pasteMode&&<div className="paste-banner">Copied label ready — click a breaker to paste it there.<Button onClick={cancelPaste}>Cancel paste</Button></div>}{settingsOpen&&<section className="settings-card"><label>Panel title<input value={config.title||''} placeholder="Main panel" onChange={e=>set('config',{...config,title:e.target.value})}/></label><label>Language<select value={config.language} onChange={e=>set('config',{...config,language:e.target.value})}><option value="EN">English</option><option value="FR">Français</option></select></label><label>Paper size<select value={config.paper} onChange={e=>set('config',{...config,paper:e.target.value})}><option value="letter">US Letter</option><option value="a4">A4</option></select></label><label>Breaker count<input type="number" min="2" max="60" step="2" value={config.count} onChange={e=>set('config',{...config,count:+e.target.value})}/></label><label>Label width (in)<input type="number" step=".25" value={config.width} onChange={e=>set('config',{...config,width:+e.target.value})}/></label><label>Row height (in)<input type="number" step=".05" value={config.row} onChange={e=>set('config',{...config,row:+e.target.value})}/></label><label>Dot rendering<select value={config.dotMode} onChange={e=>set('config',{...config,dotMode:e.target.value})}><option value="color">Full color</option><option value="outline">Outline only</option><option value="pattern">B&W patterns</option><option value="none">No dot — expand label</option></select></label><div className="settings-danger"><span>Danger zone</span><Button type="button" onClick={()=>{if(window.confirm('Clear every label from this panel?'))reset()}}>Delete panel</Button></div></section>}<div className="panel-actions"><Button onClick={()=>set('settingsOpen',!settingsOpen)}><Settings2/> Panel settings</Button></div><section className={`panel dots-${config.dotMode} ${pasteMode?'paste-mode':''}`} style={{'--row-h':`${config.row}in`,'--label-w':`${config.width}in`}}>{rail('left')}<div className="numbers">{rows.slice(0,rowCount).map((_,i)=><span key={i}>{String(i*2+1).padStart(2,'0')} · {String(i*2+2).padStart(2,'0')}</span>)}</div>{rail('right')}</section>{edit&&<Dialog {...edit} language={config.language}/>}</main>
 }
 function PrintPages(){
   const {rows,config}=usePanel()
@@ -158,9 +209,17 @@ function PrintPages(){
         start+=1
       }
     }
-    pages.push(<section className="print-sheet" key={pageStart} style={{'--sheet-h':config.paper==='a4'?'11.69in':'11in','--label-w':`${config.width}in`}}><i className="mark tl"/><i className="mark tr"/><i className="mark bl"/><i className="mark br"/><div className="print-cut-guides" aria-hidden="true"><i className="outer-left"/><i className="outer-right"/></div><div className="print-panel" style={{'--row-h':`${config.row}in`,'--label-w':`${config.width}in`,'--print-rows':chunk.length}}>{['left','right'].map(side=><div className="print-rail" key={side}>{chunk.map((row,i)=>row[side].reserved?<div className="print-reserved" key={i}/>:<Label key={i} card={row[side]} side={side} index={pageStart+i} onClick={()=>{}} beginDrag={()=>{}} setDragTarget={()=>{}} endDrag={()=>{}} dragging={null} dragTarget={null} swap={()=>{}}/>)}</div>)}</div><p className="print-reference">{config.paper==='a4'?'A4':'US Letter'} · ¼in page margin · {config.row}in breaker height · print at 100%</p></section>)
+    pages.push(<section className="print-sheet" key={pageStart} style={{'--sheet-h':config.paper==='a4'?'11.69in':'11in','--label-w':`${config.width}in`}}><i className="mark tl"/><i className="mark tr"/><i className="mark bl"/><i className="mark br"/><div className="print-cut-guides" aria-hidden="true"><i className="outer-left"/><i className="outer-right"/></div><div className={`print-panel dots-${config.dotMode}`} style={{'--row-h':`${config.row}in`,'--label-w':`${config.width}in`,'--print-rows':chunk.length}}>{['left','right'].map(side=><div className="print-rail" key={side}>{chunk.map((row,i)=>row[side].reserved?<div className="print-reserved" key={i}/>:<Label key={i} card={row[side]} side={side} index={pageStart+i} onClick={()=>{}} beginDrag={()=>{}} setDragTarget={()=>{}} endDrag={()=>{}} dragging={null} dragTarget={null} swap={()=>{}}/>)}</div>)}</div><p className="print-reference">{config.paper==='a4'?'A4':'US Letter'} · ¼in page margin · {config.row}in breaker height · print at 100%</p></section>)
   }
   return <div className="print-pages">{pages}</div>
 }
-function App(){ const {theme,set,config,reset,dummy}=usePanel(); const exportData=()=>{const raw=JSON.stringify(usePanel.getState().rows,null,2),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([raw],{type:'application/json'}));a.download='panel-labels.json';a.click()}; const importData=e=>{const file=e.target.files?.[0];if(!file)return;file.text().then(text=>{const rows=JSON.parse(text);if(Array.isArray(rows))usePanel.getState().set('rows',rows)}).catch(()=>window.alert('That file is not valid panel JSON.'));e.target.value=''}; const chooseLanguage=language=>{set('config',{...config,language});if(confirm(`Load the ${language==='FR'?'French':'English'} demo panel? This replaces the current panel.`))dummy()};return <div className={theme}><style>{`@page{size:${config.paper==='a4'?'A4':'letter'} portrait;margin:.25in}`}</style><header className="topbar"><a className="brand" href="#"><PanelTop/> Panel Labeler</a><nav><div className="language-switch"><Button variant={config.language==='EN'?'primary':'ghost'} onClick={()=>chooseLanguage('EN')}>EN</Button><Button variant={config.language==='FR'?'primary':'ghost'} onClick={()=>chooseLanguage('FR')}>FR</Button></div><Button onClick={()=>set('theme',theme==='light'?'dark':'light')} title="Toggle dark mode">{theme==='light'?<Moon/>:<Sun/>}</Button><Button variant="primary" onClick={()=>window.print()}><Printer/> Print</Button><details className="panel-menu"><summary className="button"><Settings2/> Options</summary><div className="panel-menu-items"><Button onClick={()=>set('settingsOpen',!usePanel.getState().settingsOpen)}><Settings2/> Panel settings</Button><Button onClick={()=>dummy()}><RotateCcw/> Create demo</Button><label className="button"><Upload/> Import<input hidden type="file" accept="application/json" onChange={importData}/></label><Button onClick={exportData}><Download/> Export</Button><Button variant="danger" onClick={()=>{if(confirm('Clear every label from this panel?'))reset()}}><Trash2/> Clear panel</Button></div></details></nav></header><Editor/><PrintPages/></div> }
+function App(){
+  const {theme,set,config,reset,dummy}=usePanel()
+  const [jpegPreview,setJpegPreview]=useState(null)
+  const exportData=()=>{const raw=JSON.stringify(usePanel.getState().rows,null,2),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([raw],{type:'application/json'}));a.download='panel-labels.json';a.click()}
+  const downloadJpeg=async(monochrome=false)=>{const data=await makeJpeg(usePanel.getState().rows,config,monochrome),a=document.createElement('a');a.href=data;a.download=`panel-labeler-reference${monochrome?'-bw':''}.jpg`;a.click()}
+  const importData=e=>{const file=e.target.files?.[0];if(!file)return;file.text().then(text=>{const rows=JSON.parse(text);if(Array.isArray(rows))usePanel.getState().set('rows',rows)}).catch(()=>window.alert('That file is not valid panel JSON.'));e.target.value=''}
+  const chooseLanguage=language=>{set('config',{...config,language});if(confirm(`Load the ${language==='FR'?'French':'English'} demo panel? This replaces the current panel.`))dummy()}
+  return <div className={theme}><style>{`@page{size:${config.paper==='a4'?'A4':'letter'} portrait;margin:.25in}`}</style><header className="topbar"><a className="brand" href="#"><PanelTop/> Panel Labeler</a><nav><div className="language-switch"><Button variant={config.language==='EN'?'primary':'ghost'} onClick={()=>chooseLanguage('EN')}>EN</Button><Button variant={config.language==='FR'?'primary':'ghost'} onClick={()=>chooseLanguage('FR')}>FR</Button></div><Button onClick={()=>set('theme',theme==='light'?'dark':'light')} title="Toggle dark mode">{theme==='light'?<Moon/>:<Sun/>}</Button><Button variant="primary" onClick={()=>window.print()}><Printer/> Print</Button><Button onClick={()=>downloadJpeg(config.dotMode==='pattern')}><Download/> JPEG</Button><details className="panel-menu"><summary className="button"><Settings2/> Options</summary><div className="panel-menu-items"><Button onClick={()=>dummy()}><RotateCcw/> Create demo</Button><label className="button"><Upload/> Import<input hidden type="file" accept="application/json" onChange={importData}/></label><Button onClick={exportData}><Download/> Export</Button><Button variant="danger" onClick={()=>{if(confirm('Clear every label from this panel?'))reset()}}><Trash2/> Clear panel</Button></div></details></nav></header><Editor/><PrintPages/>{jpegPreview&&<div className="scrim" onMouseDown={e=>{if(e.target===e.currentTarget)setJpegPreview(null)}}><section className="dialog jpeg-preview"><header><div><span className="eyebrow">PHONE REFERENCE</span><h2>{jpegPreview.monochrome?'B&W':'Colour'} JPEG</h2></div><Button onClick={()=>setJpegPreview(null)}>Close</Button></header><img src={jpegPreview.data} alt="Panel JPEG reference"/><footer><a className="button primary" href={jpegPreview.data} download={`panel-labeler-reference${jpegPreview.monochrome?'-bw':''}.jpg`}><Download/> Save JPEG</a></footer></section></div>}</div>
+}
 export default App
