@@ -1,4 +1,4 @@
-import { ArrowRight, Bath, BedDouble, Car, ChartNoAxesColumnIncreasing, ChevronDown, ChevronUp, Download, Dumbbell, Fan, Hammer, Lightbulb, ListOrdered, Minus, Moon, MousePointer2, NotebookPen, PanelTop, Plug, Printer, RotateCcw, Settings2, Sofa, Sun, Trees, Trash2, Triangle, Upload, Utensils, WashingMachine, Waves, Wrench } from 'lucide-react'
+import { ArrowRight, Bath, BedDouble, Car, ChartNoAxesColumnIncreasing, ChevronDown, ChevronUp, ChevronsUp, Download, Dumbbell, Fan, Hammer, Lightbulb, ListOrdered, Minus, Moon, MousePointer2, NotebookPen, PanelTop, Plug, Printer, RotateCcw, Settings2, Sofa, Sun, Trees, Trash2, Triangle, Upload, Utensils, WashingMachine, Waves, Wrench } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
 import { useState } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -38,7 +38,7 @@ const fixtureChoicesByLanguage={EN:['Lights','Outlets','GFCI','Dryer','Washer','
 const autoFixture=(text='')=>/water heater|chauffe-eau|heater tank/i.test(text)?'heater':/washer|laveuse|dryer|sécheuse/i.test(text)?'laundry':/central vacuum|aspirateur central/i.test(text)?'vacuum':/air exchange|échangeur d.?air|ventilation/i.test(text)?'ventilation':/stove fan|oven fan|range hood|hotte/i.test(text)?'hood':/stove|range|oven|cuisinière|four/i.test(text)?'appliance':/light|lamp|lumière/i.test(text)?'light':/outlet|plug|gfci|prise|ddft/i.test(text)?'plug':/fan|ventilateur/i.test(text)?'fan':null
 const autoRoom=(room='')=>{const exact={Workshop:'Hammer',Atelier:'Hammer',Laundry:'WashingMachine','Laundry room':'WashingMachine','Salle de lavage':'WashingMachine',Kitchen:'Utensils',Cuisine:'Utensils',Bedroom:'BedDouble',Chambre:'BedDouble',Bachelor:'BedDouble','Garçonnière':'BedDouble',Bathroom:'Bath','Salle de bain':'Bath',Office:'NotebookPen',Bureau:'NotebookPen',Gym:'Dumbbell',Sauna:'Waves',Staircase:'ChartNoAxesColumnIncreasing',Escalier:'ChartNoAxesColumnIncreasing','Living room':'Sofa',Salon:'Sofa','Dining room':'Utensils','Salle à manger':'Utensils',Garage:'Car',Terrace:'Trees',Terrasse:'Trees',Outside:'Trees','Outside / Exterior':'Trees','Extérieur':'Trees',Utility:'Wrench','Mécanique':'Wrench'};return exact[room]||(/outside|extérieur|exterieur/i.test(room)?'Trees':undefined)}
 const roomIcon=room=>iconMap[room]||icons[autoRoom(room)]
-function LevelIndicator({floor}){const Icon=({BSM:ChevronDown,SS:ChevronDown,'1ST':Minus,'1ER':Minus,'2ND':ChevronUp,'2E':ChevronUp,MEZ:Triangle,OUT:Trees,EXT:Trees,MEC:Wrench}[floor]);if(floor==='MAIN'||floor==='RDC')return <span className="level-dot" aria-label="Main floor"/>;return Icon?<Icon className="level-indicator"/>:null}
+function LevelIndicator({floor}){const Icon=({BSM:ChevronDown,SS:ChevronDown,MAIN:Minus,RDC:Minus,'1ST':ChevronUp,'1ER':ChevronUp,'2ND':ChevronsUp,'2E':ChevronsUp,MEZ:Triangle,OUT:Trees,EXT:Trees,MEC:Wrench}[floor]);return Icon?<Icon className="level-indicator"/>:null}
 
 const usePanel = create((set) => ({ rows:savedProject?.rows||demoRows(initialLanguage), theme:savedProject?.theme||'dark', started:false, edit:null, settingsOpen:false, dragging:null, config:{title:'Panel',count:60,width:3,row:.75,language:initialLanguage,paper:'letter',...savedConfig},
   set:(key,value)=>set({[key]:value}),
@@ -123,7 +123,7 @@ const drawJpegIcon=(ctx,Icon,x,y,size,color)=>new Promise(resolve=>{
   image.onerror=resolve
   image.src=`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 })
-const levelIconFor=floor=>({BSM:ChevronDown,SS:ChevronDown,'1ST':Minus,'1ER':Minus,'2ND':ChevronUp,'2E':ChevronUp,MEZ:Triangle,OUT:Trees,EXT:Trees,MEC:Wrench}[floor])
+const levelIconFor=floor=>({BSM:ChevronDown,SS:ChevronDown,MAIN:Minus,RDC:Minus,'1ST':ChevronUp,'1ER':ChevronUp,'2ND':ChevronsUp,'2E':ChevronsUp,MEZ:Triangle,OUT:Trees,EXT:Trees,MEC:Wrench}[floor])
 const makeJpeg=async(rows,config)=>{
   const activeRows=rows.slice(0,Math.ceil(config.count/2)),width=1080,padding=24,header=108,rowHeight=68,height=header+activeRows.length*rowHeight+padding
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d')
@@ -144,7 +144,6 @@ const makeJpeg=async(rows,config)=>{
     if(RoomIcon)await drawJpegIcon(ctx,RoomIcon,slotX+12,y+cardH/2-13,26,'#142032')
     const LevelIcon=levelIconFor(card.floor)
     if(LevelIcon)await drawJpegIcon(ctx,LevelIcon,slotX+48,y+cardH/2-13,18,'#142032')
-    else if(card.floor==='MAIN'||card.floor==='RDC'){ctx.beginPath();ctx.arc(slotX+57,y+cardH/2-4,5,0,Math.PI*2);ctx.strokeStyle='#142032';ctx.lineWidth=2;ctx.stroke()}
     ctx.fillStyle='#142032';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.font='700 9px ui-monospace, SFMono-Regular, monospace';ctx.fillText(card.floor||'',slotX+57,y+cardH/2+18)
     const roomX=textX
     ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillStyle='#0f1f35';ctx.font='700 17px Inter, system-ui, sans-serif';ctx.fillText((card.room||'UNLABELLED').toUpperCase(),roomX,y+27,maxText-(RoomIcon?23:0))
