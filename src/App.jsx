@@ -1,4 +1,4 @@
-import { ArrowRight, Bath, BedDouble, ChevronDown, ChevronUp, Download, Dumbbell, Fan, Footprints, Hammer, Lightbulb, ListOrdered, Minus, Moon, MousePointer2, PanelTop, Plug, Printer, RotateCcw, Settings2, Sun, Trees, Trash2, Triangle, Upload, Utensils, WashingMachine, Waves, Wrench } from 'lucide-react'
+import { ArrowRight, Bath, BedDouble, ChartNoAxesColumnIncreasing, ChevronDown, ChevronUp, Download, Dumbbell, Fan, Hammer, Lightbulb, ListOrdered, Minus, Moon, MousePointer2, PanelTop, Plug, Printer, RotateCcw, Settings2, Sun, Trees, Trash2, Triangle, Upload, Utensils, WashingMachine, Waves, Wrench } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
 import { useState } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -23,9 +23,9 @@ seed[4].left.double=true;seed[5].left.reserved=true;seed[14].right.double=true;s
 const demoRows=(language='EN')=>{const rs=roomChoices[language],fs=floorChoices[language],fx=fixtureChoicesByLanguage[language],rows=Array.from({length:30},(_,i)=>({left:{floor:fs[i%5],room:rs[i%rs.length],items:[fx[0],fx[1]],icon:'auto'},right:{floor:fs[(i+1)%5],room:rs[(i+4)%rs.length],items:[fx[0],fx[3]],icon:'auto'}}));[[3,'left'],[8,'right'],[15,'left'],[22,'right']].forEach(([i,side])=>{rows[i][side].double=true;rows[i+1][side].reserved=true});[[1,'right'],[2,'right'],[6,'left'],[7,'left'],[12,'right'],[13,'right'],[19,'left'],[26,'right'],[27,'right']].forEach(([i,side])=>rows[i][side]=blank());return rows}
 const blank = () => ({ floor:'', room:'', items:[], icon:'auto', empty:true })
 const emptyRows = () => Array.from({ length:30 }, () => ({ left:blank(), right:blank() }))
-const iconMap={Workshop:Hammer,Laundry:WashingMachine,'Laundry room':WashingMachine,Kitchen:Utensils,Bedroom:BedDouble,Bachelor:BedDouble,Bathroom:Bath,Office:Wrench,Gym:Dumbbell,Sauna:Waves,Staircase:Footprints,'Living room':Wrench,'Dining room':Utensils,Garage:Wrench,Terrace:Trees,Outside:Trees,Utility:Wrench}
-Object.assign(iconMap,{Atelier:Hammer,'Salle de lavage':WashingMachine,Cuisine:Utensils,Chambre:BedDouble,'Garçonnière':BedDouble,'Salle de bain':Bath,Bureau:Wrench,Escalier:Footprints,Salon:Wrench,'Salle à manger':Utensils,Terrasse:Trees,'Extérieur':Trees,'Mécanique':Wrench})
-const icons={auto:null,none:null,light:Lightbulb,plug:Plug,fan:Fan,hammer:Hammer,bed:BedDouble,bath:Bath,gym:Dumbbell,stairs:Footprints,trees:Trees,wrench:Wrench,waves:Waves,utensils:Utensils}
+const iconMap={Workshop:Hammer,Laundry:WashingMachine,'Laundry room':WashingMachine,Kitchen:Utensils,Bedroom:BedDouble,Bachelor:BedDouble,Bathroom:Bath,Office:Wrench,Gym:Dumbbell,Sauna:Waves,Staircase:ChartNoAxesColumnIncreasing,'Living room':Wrench,'Dining room':Utensils,Garage:Wrench,Terrace:Trees,Outside:Trees,Utility:Wrench}
+Object.assign(iconMap,{Atelier:Hammer,'Salle de lavage':WashingMachine,Cuisine:Utensils,Chambre:BedDouble,'Garçonnière':BedDouble,'Salle de bain':Bath,Bureau:Wrench,Escalier:ChartNoAxesColumnIncreasing,Salon:Wrench,'Salle à manger':Utensils,Terrasse:Trees,'Extérieur':Trees,'Mécanique':Wrench})
+const icons={auto:null,none:null,light:Lightbulb,plug:Plug,fan:Fan,hammer:Hammer,bed:BedDouble,bath:Bath,gym:Dumbbell,stairs:ChartNoAxesColumnIncreasing,trees:Trees,wrench:Wrench,waves:Waves,utensils:Utensils}
 Object.assign(icons,LucideIcons)
 icons.heater=LucideIcons.Heater
 icons.laundry=WashingMachine
@@ -37,7 +37,7 @@ iconMap.Utility=LucideIcons.Heater
 iconMap['Mécanique']=LucideIcons.Heater
 const fixtureChoicesByLanguage={EN:['Lights','Outlets','GFCI','Dryer','Washer','Baseboard heater','Floor heat','Ceiling fan','Oven','Dishwasher','Air exchange','Central vacuum','Water heater'],FR:['Lumières','Prises','DDFT','Sécheuse','Laveuse','Plinthe électrique','Plancher chauffant','Ventilateur de plafond','Four','Lave-vaisselle','Échangeur d’air','Aspirateur central','Chauffe-eau']}
 const autoFixture=(text='')=>/water heater|chauffe-eau|heater tank/i.test(text)?'heater':/washer|laveuse|dryer|sécheuse/i.test(text)?'laundry':/central vacuum|aspirateur central/i.test(text)?'vacuum':/air exchange|échangeur d.?air|ventilation/i.test(text)?'ventilation':/stove fan|oven fan|range hood|hotte/i.test(text)?'hood':/stove|range|oven|cuisinière|four/i.test(text)?'appliance':/light|lamp|lumière/i.test(text)?'light':/outlet|plug|gfci|prise|ddft/i.test(text)?'plug':/fan|ventilateur/i.test(text)?'fan':null
-const autoRoom=(room='')=>({Workshop:'Hammer',Atelier:'Hammer',Laundry:'WashingMachine','Laundry room':'WashingMachine','Salle de lavage':'WashingMachine',Kitchen:'Utensils',Cuisine:'Utensils',Bedroom:'BedDouble',Chambre:'BedDouble',Bachelor:'BedDouble','Garçonnière':'BedDouble',Bathroom:'Bath','Salle de bain':'Bath',Office:'Wrench',Bureau:'Wrench',Gym:'Dumbbell',Sauna:'Waves',Staircase:'Footprints',Escalier:'Footprints','Living room':'Wrench',Salon:'Wrench','Dining room':'Utensils','Salle à manger':'Utensils',Garage:'Wrench',Terrace:'Trees',Terrasse:'Trees',Outside:'Trees','Extérieur':'Trees',Utility:'Heater','Mécanique':'Heater'}[room])
+const autoRoom=(room='')=>({Workshop:'Hammer',Atelier:'Hammer',Laundry:'WashingMachine','Laundry room':'WashingMachine','Salle de lavage':'WashingMachine',Kitchen:'Utensils',Cuisine:'Utensils',Bedroom:'BedDouble',Chambre:'BedDouble',Bachelor:'BedDouble','Garçonnière':'BedDouble',Bathroom:'Bath','Salle de bain':'Bath',Office:'Wrench',Bureau:'Wrench',Gym:'Dumbbell',Sauna:'Waves',Staircase:'ChartNoAxesColumnIncreasing',Escalier:'ChartNoAxesColumnIncreasing','Living room':'Wrench',Salon:'Wrench','Dining room':'Utensils','Salle à manger':'Utensils',Garage:'Wrench',Terrace:'Trees',Terrasse:'Trees',Outside:'Trees','Extérieur':'Trees',Utility:'Heater','Mécanique':'Heater'}[room])
 function LevelIndicator({floor}){const Icon=({BSM:ChevronDown,SS:ChevronDown,'1ST':Minus,'1ER':Minus,'2ND':ChevronUp,'2E':ChevronUp,MEZ:Triangle,OUT:Trees,EXT:Trees,MEC:Wrench}[floor]);if(floor==='MAIN'||floor==='RDC')return <span className="level-dot" aria-label="Main floor"/>;return Icon?<Icon className="level-indicator"/>:null}
 
 const usePanel = create((set) => ({ rows:savedProject?.rows||demoRows(initialLanguage), theme:savedProject?.theme||'dark', started:false, edit:null, settingsOpen:false, dragging:null, config:{title:'Panel',count:60,width:3,row:.75,dotMode:'color',language:initialLanguage,paper:'letter',...(savedProject?.config||{})},
@@ -231,9 +231,9 @@ function PrintPages(){
   return <div className="print-pages">{pages}</div>
 }
 function LandingLabel({side='left',floor,number,room,RoomIcon,fixtures=[]}){
-  const content=<span className="demo-label-main"><b>{RoomIcon&&<RoomIcon/>}{room}</b><small>{floor}<strong>{number}</strong></small><span>{fixtures.map(([Icon,text])=><em key={text}>{Icon&&<Icon/>}{text}</em>)}</span></span>
-  const dot=<i style={{background:levelColors[floor]||dots[floor]}}>{number}</i>
-  return <div className={`demo-label ${side}`}>{side==='right'?<>{dot}{content}</>:<>{content}{dot}</>}</div>
+  const content=<span className="demo-label-main"><b>{room}</b><span>{fixtures.map(([Icon,text],index)=><em className={index<2?'primary-fixture':''} key={text}>{Icon&&<Icon/>}{text}</em>)}</span></span>
+  const marker=<i className="demo-icon-slot">{RoomIcon&&<RoomIcon/>}<span className="demo-level-meta"><LevelIndicator floor={floor}/><small>{floor}</small></span></i>
+  return <div className={`demo-label ${side}`}>{side==='right'?<>{marker}{content}</>:<>{content}{marker}</>}</div>
 }
 function Landing(){
   const {theme,config,set}=usePanel()
