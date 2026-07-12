@@ -180,10 +180,10 @@ function Label({ card, side, index, onClick, beginDrag, setDragTarget, endDrag, 
   const className=`label ${side} ${card.double?'double':''} ${isTarget?'drop-target':''}`
   const props={draggable:true,onDragStart:dragStart,onDragEnd:endDrag,onDragOver:dragOver,onDragEnter:dragEnter,onDrop:drop,className,onClick}
   const Icon=card.icon&&card.icon!=='auto'?icons[card.icon]:iconMap[card.room]
-  const marker=card.room&&Icon?<i className="room-icon-slot"><Icon/><LevelIndicator floor={card.floor}/></i>:null
+  const marker=card.room&&Icon?<i className="room-icon-slot"><Icon/><span className="level-meta"><LevelIndicator floor={card.floor}/><small>{card.floor}</small></span></i>:null
   if(card.empty&&!card.room&&!card.items?.length)return <button {...props} className={`${className} blank`} aria-label="Add circuit"><span className="blank-content"/></button>
   const fixtures=(card.fixtures||card.items.map(text=>({text,icon:'auto'}))).filter(x=>x.text).slice(0,3)
-  const main=<span className="label-main"><b>{card.room}</b><small><span>{card.floor}</span></small><span>{fixtures.map((f,i)=>{const I=icons[f.icon==='auto'?autoFixture(f.text):f.icon];return <em className={i<2?'primary-fixture':''} key={i}>{I&&<I/>}{f.text}</em>})}</span></span>
+  const main=<span className="label-main"><b>{card.room}</b><span>{fixtures.map((f,i)=>{const I=icons[f.icon==='auto'?autoFixture(f.text):f.icon];return <em className={i<2?'primary-fixture':''} key={i}>{I&&<I/>}{f.text}</em>})}</span></span>
   const placement=printRow?{gridRow:`${printRow} / span ${card.double?2:1}`}:(card.double?{gridRow:'span 2'}:{})
   const labelStyle={...placement,...(card.backgroundColor?{backgroundColor:card.backgroundColor}:{})}
   return <button {...props} style={labelStyle}>{side==='right'?<>{marker}{main}</>:<>{main}{marker}</>}</button>
