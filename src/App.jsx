@@ -22,7 +22,7 @@ seed[4].left.double=true;seed[5].left.reserved=true;seed[14].right.double=true;s
 const demoRows=(language='EN')=>{const rs=roomChoices[language],fs=floorChoices[language],fx=fixtureChoicesByLanguage[language],rows=Array.from({length:30},(_,i)=>({left:{floor:fs[i%5],room:rs[i%rs.length],items:[fx[0],fx[1]],icon:'auto'},right:{floor:fs[(i+1)%5],room:rs[(i+4)%rs.length],items:[fx[0],fx[3]],icon:'auto'}}));[[3,'left'],[8,'right'],[15,'left'],[22,'right']].forEach(([i,side])=>{rows[i][side].double=true;rows[i+1][side].reserved=true});[[1,'right'],[2,'right'],[6,'left'],[7,'left'],[12,'right'],[13,'right'],[19,'left'],[26,'right'],[27,'right']].forEach(([i,side])=>rows[i][side]=blank());return rows}
 const blank = () => ({ floor:'', room:'', items:[], icon:'auto', empty:true })
 const emptyRows = () => Array.from({ length:30 }, () => ({ left:blank(), right:blank() }))
-const iconMap={Workshop:Hammer,Laundry:WashingMachine,'Laundry room':WashingMachine,Kitchen:Utensils,Bedroom:BedDouble,Bachelor:BedDouble,Bathroom:Bath,Office:NotebookPen,Gym:Dumbbell,Sauna:Waves,Staircase:ChartNoAxesColumnIncreasing,'Living room':Sofa,'Dining room':Utensils,Garage:Car,Terrace:Trees,Outside:Trees,Utility:Wrench}
+const iconMap={Workshop:Hammer,Laundry:WashingMachine,'Laundry room':WashingMachine,Kitchen:Utensils,Bedroom:BedDouble,Bachelor:BedDouble,Bathroom:Bath,Office:NotebookPen,Gym:Dumbbell,Sauna:Waves,Staircase:ChartNoAxesColumnIncreasing,'Living room':Sofa,'Dining room':Utensils,Garage:Car,Terrace:Trees,Outside:Trees,'Outside / Exterior':Trees,Utility:Wrench}
 Object.assign(iconMap,{Atelier:Hammer,'Salle de lavage':WashingMachine,Cuisine:Utensils,Chambre:BedDouble,'Garçonnière':BedDouble,'Salle de bain':Bath,Bureau:NotebookPen,Escalier:ChartNoAxesColumnIncreasing,Salon:Sofa,'Salle à manger':Utensils,Garage:Car,Terrasse:Trees,'Extérieur':Trees,'Mécanique':Wrench})
 const icons={auto:null,none:null,light:Lightbulb,plug:Plug,fan:Fan,hammer:Hammer,bed:BedDouble,bath:Bath,gym:Dumbbell,stairs:ChartNoAxesColumnIncreasing,trees:Trees,wrench:Wrench,waves:Waves,utensils:Utensils,sofa:Sofa,car:Car}
 Object.assign(icons,LucideIcons)
@@ -36,7 +36,8 @@ iconMap.Utility=Wrench
 iconMap['Mécanique']=Wrench
 const fixtureChoicesByLanguage={EN:['Lights','Outlets','GFCI','Dryer','Washer','Baseboard heater','Floor heat','Ceiling fan','Oven','Dishwasher','Air exchange','Central vacuum','Water heater'],FR:['Lumières','Prises','DDFT','Sécheuse','Laveuse','Plinthe électrique','Plancher chauffant','Ventilateur de plafond','Four','Lave-vaisselle','Échangeur d’air','Aspirateur central','Chauffe-eau']}
 const autoFixture=(text='')=>/water heater|chauffe-eau|heater tank/i.test(text)?'heater':/washer|laveuse|dryer|sécheuse/i.test(text)?'laundry':/central vacuum|aspirateur central/i.test(text)?'vacuum':/air exchange|échangeur d.?air|ventilation/i.test(text)?'ventilation':/stove fan|oven fan|range hood|hotte/i.test(text)?'hood':/stove|range|oven|cuisinière|four/i.test(text)?'appliance':/light|lamp|lumière/i.test(text)?'light':/outlet|plug|gfci|prise|ddft/i.test(text)?'plug':/fan|ventilateur/i.test(text)?'fan':null
-const autoRoom=(room='')=>({Workshop:'Hammer',Atelier:'Hammer',Laundry:'WashingMachine','Laundry room':'WashingMachine','Salle de lavage':'WashingMachine',Kitchen:'Utensils',Cuisine:'Utensils',Bedroom:'BedDouble',Chambre:'BedDouble',Bachelor:'BedDouble','Garçonnière':'BedDouble',Bathroom:'Bath','Salle de bain':'Bath',Office:'NotebookPen',Bureau:'NotebookPen',Gym:'Dumbbell',Sauna:'Waves',Staircase:'ChartNoAxesColumnIncreasing',Escalier:'ChartNoAxesColumnIncreasing','Living room':'Sofa',Salon:'Sofa','Dining room':'Utensils','Salle à manger':'Utensils',Garage:'Car',Terrace:'Trees',Terrasse:'Trees',Outside:'Trees','Extérieur':'Trees',Utility:'Wrench','Mécanique':'Wrench'}[room])
+const autoRoom=(room='')=>{const exact={Workshop:'Hammer',Atelier:'Hammer',Laundry:'WashingMachine','Laundry room':'WashingMachine','Salle de lavage':'WashingMachine',Kitchen:'Utensils',Cuisine:'Utensils',Bedroom:'BedDouble',Chambre:'BedDouble',Bachelor:'BedDouble','Garçonnière':'BedDouble',Bathroom:'Bath','Salle de bain':'Bath',Office:'NotebookPen',Bureau:'NotebookPen',Gym:'Dumbbell',Sauna:'Waves',Staircase:'ChartNoAxesColumnIncreasing',Escalier:'ChartNoAxesColumnIncreasing','Living room':'Sofa',Salon:'Sofa','Dining room':'Utensils','Salle à manger':'Utensils',Garage:'Car',Terrace:'Trees',Terrasse:'Trees',Outside:'Trees','Outside / Exterior':'Trees','Extérieur':'Trees',Utility:'Wrench','Mécanique':'Wrench'};return exact[room]||(/outside|extérieur|exterieur/i.test(room)?'Trees':undefined)}
+const roomIcon=room=>iconMap[room]||icons[autoRoom(room)]
 function LevelIndicator({floor}){const Icon=({BSM:ChevronDown,SS:ChevronDown,'1ST':Minus,'1ER':Minus,'2ND':ChevronUp,'2E':ChevronUp,MEZ:Triangle,OUT:Trees,EXT:Trees,MEC:Wrench}[floor]);if(floor==='MAIN'||floor==='RDC')return <span className="level-dot" aria-label="Main floor"/>;return Icon?<Icon className="level-indicator"/>:null}
 
 const usePanel = create((set) => ({ rows:savedProject?.rows||demoRows(initialLanguage), theme:savedProject?.theme||'dark', started:false, edit:null, settingsOpen:false, dragging:null, config:{title:'Panel',count:60,width:3,row:.75,language:initialLanguage,paper:'letter',...savedConfig},
@@ -138,7 +139,7 @@ const makeJpeg=async(rows,config)=>{
     ctx.fillStyle=card.backgroundColor||'#fff';ctx.fillRect(x,y,cardWidth,cardH)
     ctx.strokeStyle='#c7d2de';ctx.lineWidth=1.5;ctx.strokeRect(x+1,y+1,cardWidth-2,cardH-2)
     if(card.empty&&!card.room&&!card.items?.length)return
-    const slotWidth=86,slotX=side==='left'?x+cardWidth-slotWidth:x,textX=side==='left'?x+13:x+slotWidth+13,maxText=cardWidth-slotWidth-26,RoomIcon=card.icon&&card.icon!=='auto'?icons[card.icon]:iconMap[card.room]
+    const slotWidth=86,slotX=side==='left'?x+cardWidth-slotWidth:x,textX=side==='left'?x+13:x+slotWidth+13,maxText=cardWidth-slotWidth-26,RoomIcon=card.icon&&card.icon!=='auto'?icons[card.icon]:roomIcon(card.room)
     ctx.strokeStyle='#aeb9c8';ctx.beginPath();ctx.moveTo(side==='left'?slotX:slotX+slotWidth,y);ctx.lineTo(side==='left'?slotX:slotX+slotWidth,y+cardH);ctx.stroke()
     if(RoomIcon)await drawJpegIcon(ctx,RoomIcon,slotX+12,y+cardH/2-13,26,'#142032')
     const LevelIcon=levelIconFor(card.floor)
@@ -163,7 +164,7 @@ function Label({ card, side, index, onClick, beginDrag, setDragTarget, endDrag, 
   const drop=e=>{e.preventDefault();if(dragging)swap(dragging,position);endDrag()}
   const className=`label ${side} ${card.double?'double':''} ${isTarget?'drop-target':''}`
   const props={draggable:true,onDragStart:dragStart,onDragEnd:endDrag,onDragOver:dragOver,onDragEnter:dragEnter,onDrop:drop,className,onClick}
-  const Icon=card.icon&&card.icon!=='auto'?icons[card.icon]:iconMap[card.room]
+  const Icon=card.icon&&card.icon!=='auto'?icons[card.icon]:roomIcon(card.room)
   const marker=card.room&&Icon?<i className="room-icon-slot"><Icon/><span className="level-meta"><LevelIndicator floor={card.floor}/><small>{card.floor}</small></span></i>:null
   if(card.empty&&!card.room&&!card.items?.length)return <button {...props} className={`${className} blank`} aria-label="Add circuit"><span className="blank-content"/></button>
   const fixtures=(card.fixtures||card.items.map(text=>({text,icon:'auto'}))).filter(x=>x.text).slice(0,3)
