@@ -24,3 +24,24 @@
 .icon-search{display:flex;gap:6px;margin-bottom:6px}.icon-search input{min-width:0;flex:1}.icon-search button{white-space:nowrap;border:1px solid #d8dee8;background:#fff;border-radius:5px;padding:5px 7px;font:12px inherit}
 .dark .settings-card{background:#172333;border-color:#3b4a60;color:#f8fafc}.dark .settings-card label{color:#f8fafc}.dark .settings-card input,.dark .settings-card select{background:#101827;border-color:#52647d;color:#f8fafc}.dark .settings-card .settings-danger{border-color:#3b4a60}
 .dialog-actions{width:100%}.dialog-actions-left{margin-right:auto}.dialog-actions-right{margin-left:auto}
+.label-main small{display:grid;justify-items:end;gap:2px;line-height:1}.label-main small>span{display:block;grid-column:auto;padding:0;font:inherit}.label-main small strong{font:700 9px "DM Mono";color:#98a2b3}
+.label i{display:grid;place-items:center;color:#fff;font:700 9px "DM Mono";line-height:1}.label i span{display:block}.blank-content{min-width:0}@media print{.print-panel .label i{color:#fff}}
+.label.blank i{background:#fff!important;color:#344054}
+@media print{.print-panel{margin-top:.25in}}
+@media print{.print-rail{grid-template-rows:repeat(var(--print-rows),var(--row-h))}.print-reserved{display:none}}
+@page{margin:0}@media print{.print-sheet{height:var(--sheet-h)!important}.print-sheet::before{content:"";position:absolute;inset:.25in;border:1px dashed #344054;pointer-events:none}.print-sheet::after{content:"";position:absolute;top:.25in;bottom:.55in;left:50%;border-left:1px dashed #667085;pointer-events:none}.print-panel{width:calc(100% - .5in);grid-template-columns:1fr var(--label-w) 1fr var(--label-w) 1fr;justify-content:initial;gap:0;padding:0;background:transparent;border:0}.print-panel .print-rail:first-child{grid-column:2}.print-panel .print-rail:last-child{grid-column:4}.print-reference{position:absolute;bottom:.34in;left:0;right:0;margin:0;font:8px "DM Mono";color:#344054;text-align:center}.mark.tl{top:.25in;left:.25in}.mark.tr{top:.25in;right:.25in}.mark.bl{bottom:.25in;left:.25in}.mark.br{bottom:.25in;right:.25in}}
+.print-pages{display:none}@media print{.topbar,.editor{display:none!important}.print-pages{display:block}.print-sheet{position:relative;break-after:page;width:100%;height:10.5in;display:grid;place-items:start center}.print-sheet:last-child{break-after:auto}.print-panel{--dot-w:.75in;width:max-content;display:grid;grid-template-columns:var(--label-w) var(--label-w);gap:.12in;padding:.1in;background:#263448;border:1px solid #172333}.print-rail{display:grid;grid-template-rows:repeat(14,var(--row-h));grid-auto-flow:row}.print-rail .label{height:var(--row-h);min-height:0}.print-rail .label.double{height:auto}.print-reserved{display:none}.print-rail .label.blank{background:#fff;border-color:#344054}.mark{position:absolute;width:.18in;height:.18in}.mark::before,.mark::after{content:"";position:absolute;background:#111}.mark::before{width:.18in;height:1px;top:.09in}.mark::after{height:.18in;width:1px;left:.09in}.mark.tl{top:0;left:0}.mark.tr{top:0;right:0}.mark.bl{bottom:0;left:0}.mark.br{bottom:0;right:0}}
+/* The final print geometry deliberately comes after the legacy print rules above. */
+@media print{
+  .print-sheet{display:block;overflow:hidden}
+  .print-sheet::before{display:none}
+  .print-sheet::after{top:.25in;bottom:.55in;border-left:1px dotted #667085}
+  .print-panel{width:max-content;margin:.25in auto 0;grid-template-columns:var(--label-w) var(--label-w);gap:.25in;padding:0;background:transparent;border:0}
+  .print-panel .print-rail:first-child{grid-column:1}
+  .print-panel .print-rail:last-child{grid-column:2}
+  .print-cut-guides{position:absolute;top:.25in;right:0;bottom:.55in;left:0;pointer-events:none}
+  .print-cut-guides i{position:absolute;top:0;bottom:0;border-left:1px dotted #667085}
+  .print-cut-guides .outer-left{left:calc(50% - var(--label-w) - .25in)}
+  .print-cut-guides .outer-right{left:calc(50% + var(--label-w) + .25in)}
+  .mark{display:none}
+}
